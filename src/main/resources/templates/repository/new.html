@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>new</title>
+</head>
+<body>
+<form th:object="${repositoryForm}" method="post">
+    <label for="name">Enter Name:</label>
+    <br>
+    <input id="name" th:field="*{name}">
+    <br>
+    <label for="isPrivate">Enter isPrivate:</label>
+    <input type="checkbox" id="isPrivate" th:field="*{isPrivate}" name="isPrivate">
+    <br>
+    <input type="submit" value="CREATE">
+</form>
+</body>
+</html>
