@@ -5,6 +5,8 @@ import org.example.github2.Entity.User;
 import org.example.github2.Repositoryes.RepositoryRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class RepositoryService {
     private final RepositoryRepository repositoryRepository;
@@ -13,8 +15,9 @@ public class RepositoryService {
         this.repositoryRepository = repositoryRepository;
     }
 
-    public void addRepository(Repository repository){
+    public int addRepository(Repository repository){
         repositoryRepository.save(repository);
+        return repositoryRepository.findAll().getLast().getId();
     }
 
     public Repository findByNameAndOwner(String name , User owner){

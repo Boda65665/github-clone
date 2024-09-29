@@ -10,4 +10,8 @@ import lombok.NoArgsConstructor;
 public class File {
     private String pathOriginalFile;
     private Commit commit;
+
+    public File(String pathOriginalFile) {
+        this.pathOriginalFile = pathOriginalFile;
+    }
 }

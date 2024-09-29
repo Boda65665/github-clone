@@ -7,7 +7,7 @@
 <body>
 <ul>
   <li th:each="fileOrDire : ${filesAndDirs}">
-    <a th:href="${lastHref}+'/'+${fileOrDire}" th:text="${fileOrDire}"></a>
+      <a th:href="${lastHref.endsWith('/') ? lastHref + fileOrDire : lastHref + '/' + fileOrDire}" th:text="${fileOrDire}"></a>
   </li>
 </ul>
 <form method="get" th:action="${uploadHref}">

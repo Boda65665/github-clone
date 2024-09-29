@@ -2,6 +2,7 @@ package org.example.github2.Repository;
 
 import org.example.github2.VersionControllerService.Entity.RepositoryTree;
 import org.example.github2.VersionControllerService.Models.Directory;
+import org.example.github2.VersionControllerService.Models.File;
 import org.example.github2.VersionControllerService.Repositories.GitRepRepository;
 import org.example.github2.VersionControllerService.Service.ServiceRepositoryTree;
 import org.junit.jupiter.api.Assertions;
@@ -43,7 +44,6 @@ public class RepositoryTest {
         Assertions.assertEquals(2,repository.getDirectories().size());
         Assertions.assertEquals(2,repository.getDirectories().getFirst().getFiles().size());
         Assertions.assertEquals(2,repository.getDirectories().get(1).getFiles().size());
-        testAssistant.clearBd();
     }
 
     @Test
@@ -54,7 +54,6 @@ public class RepositoryTest {
         Assertions.assertNull(repositoryTree.getFiles());
         Assertions.assertEquals(1,repositoryTree.getDirectories().size());
         Assertions.assertEquals(2,repositoryTree.getDirectories().getFirst().getFiles().size());
-        testAssistant.clearBd();
     }
 
     private void update() {
@@ -64,6 +63,16 @@ public class RepositoryTest {
         directories.add(repositoryTree.getDirectories().get(0));
         repositoryTree.setDirectories(directories);
         testAssistant.update(repositoryTree);
+    }
+
+    @Test
+    public void addNewFile(){
+        testAssistant.newRepositories(1);
+        serviceRepositoryTree.addNewFile(new File("/",null),"/",0);
+        serviceRepositoryTree.addNewFile(new File("/f",null),"/1",0);
+        serviceRepositoryTree.addNewFile(new File("/d/d",null),"/1/3",0);
+        serviceRepositoryTree.addNewFile(new File("/e/r",null),"/2/3/4/5",0);
+        System.out.println(gitRepRepository.findAll());
     }
 
 }

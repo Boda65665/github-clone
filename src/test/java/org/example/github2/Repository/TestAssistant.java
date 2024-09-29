@@ -17,19 +17,21 @@ public class TestAssistant {
     public TestAssistant(GitRepRepository gitRepRepository, ServiceRepositoryTree serviceRepositoryTree) {
         this.gitRepRepository = gitRepRepository;
         this.serviceRepositoryTree = serviceRepositoryTree;
+        clearBd();
     }
 
     public void newRepositories(int count) {
         for (int i = 0; i < count; i++) {
             Change change = new Change(new Coordinate(1, 1, 1), Action.ADD);
             Commit commit = new Commit(null, change);
-            File file = new File("/", commit);
-            File file2 = new File("/2", commit);
+            File file = new File("/first", commit);
+            File file2 = new File("/second", commit);
             List<File> files = new ArrayList<>();
             files.add(file);
             files.add(file2);
-            Directory directory = new Directory("1", files, null);
-            Directory directory2 = new Directory("2", files, null);
+            Directory directory = new Directory("1", files, new ArrayList<>());
+            Directory directory2 = new Directory("2", files, new ArrayList<>());
+            directory.addDirectory(new Directory("3",new ArrayList<>(),new ArrayList<>()));
             List<Directory> directories = new ArrayList<>();
             directories.add(directory);
             directories.add(directory2);

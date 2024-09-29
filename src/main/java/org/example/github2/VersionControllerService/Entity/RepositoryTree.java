@@ -8,6 +8,7 @@ import org.example.github2.VersionControllerService.Models.File;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Document(collection = "repositories")
@@ -15,8 +16,20 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class RepositoryTree {
-    private List<File> files;
-    private List<Directory> directories;
+    private List<File> files = new ArrayList<>();
+    private List<Directory> directories = new ArrayList<>();
     @Id
     private int repositoryId;
+
+    public RepositoryTree(int repositoryId) {
+        this.repositoryId = repositoryId;
+    }
+
+    public void addDirectory(Directory directory){
+        directories.add(directory);
+    }
+
+    public void addFile(File file){
+        files.add(file);
+    }
 }

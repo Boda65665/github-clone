@@ -9,6 +9,8 @@ import org.example.github2.Form.CreateRepositoryForm;
 import org.example.github2.Services.DB.RepositoryService;
 import org.example.github2.Services.DB.UserService;
 import org.example.github2.Services.JwtService;
+import org.example.github2.VersionControllerService.Entity.RepositoryTree;
+import org.example.github2.VersionControllerService.Service.ServiceRepositoryTree;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -28,11 +30,13 @@ public class RepositoriesController {
     private final UserService userService;
     private final RepositoryService repositoryService;
     private final JwtService jwtService;
+    private final ServiceRepositoryTree serviceRepositoryTree;
 
-    public RepositoriesController(UserService userService, RepositoryService repositoryService, JwtService jwtService) {
+    public RepositoriesController(UserService userService, RepositoryService repositoryService, JwtService jwtService, ServiceRepositoryTree serviceRepositoryTree) {
         this.userService = userService;
         this.repositoryService = repositoryService;
         this.jwtService = jwtService;
+        this.serviceRepositoryTree = serviceRepositoryTree;
     }
 
     @GetMapping("/{login}")
@@ -93,7 +97,9 @@ public class RepositoriesController {
         String email = jwtService.extractEmail(httpServletRequest);
         UserDTO userDTO = userService.findUserDtoByEmail(email);
         Repository repository = new Repository(createRepositoryForm.getName(), createRepositoryForm.getIsPrivate(), userService.findUserById(userDTO.getId()));
-        repositoryService.addRepository(repository);
+        int id = repositoryService.addRepository(repository);
+        RepositoryTree repositoryTree = new RepositoryTree(id);
+        serviceRepositoryTree.save(repositoryTree);
         String path = "P:/repository/"+userDTO.getLogin()+"/"+repository.getName();
         File directories = new File(path);
         directories.mkdirs();
@@ -128,10 +134,13 @@ public class RepositoriesController {
         if (repository==null){
             return "redirect:/";
         }
-        String pathString = "P:/"+request.getRequestURI();
-        pathString = pathString.replace("/upload", "");
+        String pathBaseString = "P:"+request.getRequestURI();
+        String basePath = "/repository/"+ownerRepository.getLogin()+"/"+repositoryName;
+        String pathDirectory = request.getRequestURI().replace(basePath,"").replace("/upload", "");
+        pathBaseString = pathBaseString.replace("/upload", "");
         for (MultipartFile file : files) {
-            pathString=pathString+"//"+file.getName();
+            String pathString=pathBaseString+"/"+file.getOriginalFilename();
+            serviceRepositoryTree.addNewFile(new org.example.github2.VersionControllerService.Models.File(pathString),pathDirectory,repository.getId());
             Path path = Path.of(pathString);
             Files.write(path, file.getBytes());
         }
