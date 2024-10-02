@@ -71,8 +71,15 @@ public class RepositoryTest {
         serviceRepositoryTree.addNewFile(new File("/",null),"/",0);
         serviceRepositoryTree.addNewFile(new File("/f",null),"/1",0);
         serviceRepositoryTree.addNewFile(new File("/d/d",null),"/1/3",0);
-        serviceRepositoryTree.addNewFile(new File("/e/r",null),"/2/3/4/5",0);
-        System.out.println(gitRepRepository.findAll());
+        serviceRepositoryTree.addNewFile(new File("/e/r",null),"/2/3/4",0);
+        RepositoryTree repositoryTree = gitRepRepository.findByRepositoryId(0);
+        // path = "/"
+        Assertions.assertEquals(3, repositoryTree.getFiles().size());
+        //path = "/1"
+        Assertions.assertEquals(3,repositoryTree.getDirectories().get(0).getFiles().size());
+        //path = "/1/3"
+        Assertions.assertEquals(1,repositoryTree.getDirectories().get(0).getDirectories().get(0).getFiles().size());
+        //path = "/2/3/4"
+        Assertions.assertEquals(1,repositoryTree.getDirectories().get(1).getDirectories().get(0).getDirectories().get(0).getFiles().size());
     }
-
 }

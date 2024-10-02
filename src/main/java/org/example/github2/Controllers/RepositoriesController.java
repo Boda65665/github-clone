@@ -22,6 +22,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 @Slf4j
 @Controller
@@ -139,6 +140,7 @@ public class RepositoriesController {
         String pathDirectory = request.getRequestURI().replace(basePath,"").replace("/upload", "");
         pathBaseString = pathBaseString.replace("/upload", "");
         for (MultipartFile file : files) {
+            System.out.println(Arrays.toString(file.getBytes()));
             String pathString=pathBaseString+"/"+file.getOriginalFilename();
             serviceRepositoryTree.addNewFile(new org.example.github2.VersionControllerService.Models.File(pathString),pathDirectory,repository.getId());
             Path path = Path.of(pathString);

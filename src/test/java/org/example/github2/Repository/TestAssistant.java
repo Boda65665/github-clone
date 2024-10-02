@@ -22,8 +22,7 @@ public class TestAssistant {
 
     public void newRepositories(int count) {
         for (int i = 0; i < count; i++) {
-            Change change = new Change(new Coordinate(1, 1, 1), Action.ADD);
-            Commit commit = new Commit(null, change);
+            Commit commit = new Commit(null, new ArrayList<>());
             File file = new File("/first", commit);
             File file2 = new File("/second", commit);
             List<File> files = new ArrayList<>();
