@@ -1,25 +1,98 @@
 package org.example.github2.Repository.CommitService;
 
-import org.example.github2.VersionControllerService.Models.Action;
-import org.example.github2.VersionControllerService.Models.Change;
-import org.example.github2.VersionControllerService.Models.Commit;
-import org.example.github2.VersionControllerService.Models.Delta;
+import org.example.github2.Repository.TestAssistant;
+import org.example.github2.VersionControllerService.Entity.RepositoryTree;
+import org.example.github2.VersionControllerService.Models.*;
+import org.example.github2.VersionControllerService.Repositories.GitRepRepository;
 import org.example.github2.VersionControllerService.Service.CommitService;
+import org.example.github2.VersionControllerService.Service.ServiceRepositoryTree;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.test.context.ActiveProfiles;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+@SpringBootTest
+@ActiveProfiles("test")
 public class CommitServiceTest {
-    private final CommitService commitService = new CommitService();
+    @Autowired
+    private CommitService commitService;
+    @Autowired
+    private GitRepRepository gitRepRepository;
+    @Autowired
+    private TestAssistant testAssistant;
+    @Autowired
+    private ServiceRepositoryTree serviceRepositoryTree;
+
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        public TestAssistant testAssistant(GitRepRepository gitRepRepository,ServiceRepositoryTree serviceRepositoryTree) {
+            return new TestAssistant(gitRepRepository,serviceRepositoryTree);
+        }
+    }
+
+    @Test
+    void addNewCommit() throws IOException {
+        String basePath = "P:\\github2\\src\\test\\java\\org\\example\\github2\\Repository\\CommitService\\filesForTestAddCommit";
+        String pathToTestFile = basePath + "\\testFile";
+        String pathToNewContent = basePath + "\\newContent";
+        String pathToInitialMeaning = basePath + "\\origContent";
+        setTestFileInitialMeaning(pathToTestFile, pathToInitialMeaning);
+        testAssistant.newRepositories(1);
+
+        File file = new File("/testFile");
+        String pathFileInTree = basePath.replace("P:","").replace("\\","/");
+        serviceRepositoryTree.addNewFile(file,pathFileInTree,0);
+
+        String newContent = String.join("\n", Files.readAllLines(Path.of(pathToNewContent)));
+        commitService.addNewCommit(basePath,"testFile", newContent, 0);
+
+        testSetNewContentFile(pathToTestFile, pathToNewContent);
+        testAddingCommitToFile(pathFileInTree,"testFile");
+    }
+
+    private void setTestFileInitialMeaning(String pathToTestFile, String pathToInitialMeaning) throws IOException {
+        String newContent = String.join("\n", Files.readAllLines(Path.of(pathToInitialMeaning)));
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(pathToTestFile))) {
+            writer.write(newContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void testAddingCommitToFile(String pathDirectory, String nameFile) {
+        RepositoryTree repositoryTree = gitRepRepository.findByRepositoryId(0);
+        Commit commit = serviceRepositoryTree.getCommitByPathToFile(pathDirectory, nameFile, 0);
+        Assertions.assertNotNull(commit);
+        List<Change> changes = commit.getChanges();
+        Assertions.assertFalse(changes.isEmpty());
+        Change firstChange = changes.getFirst();
+        Assertions.assertEquals(Action.EDIT, firstChange.getAction());
+        Change lastChange = changes.getLast();
+        Assertions.assertEquals(Action.DELETE, lastChange.getAction());
+    }
+
+    private void testSetNewContentFile(String pathToTestFile, String pathToNewContent) throws IOException {
+        List<String> testFile = Files.readAllLines(Path.of(pathToTestFile));
+        List<String> newContent = Files.readAllLines(Path.of(pathToNewContent));
+        Assertions.assertEquals(newContent, testFile);
+    }
 
     @Test
     void convert() throws IOException {
         List<Delta> deltas = generateTestDelta();
-        Commit commit = commitService.deltaToCommit(deltas);
+        Commit commit = commitService.getCommit(deltas);
         List<Change> changes = commit.getChanges();
         Assertions.assertEquals(2, changes.size());
     }
@@ -33,23 +106,23 @@ public class CommitServiceTest {
 
     @Test
     void editFileToCommit() throws IOException {
-        String basePath = "P:\\github2\\src\\test\\java\\org\\example\\github2\\Repository\\CommitService";
+        String basePath = "P:\\github2\\src\\test\\java\\org\\example\\github2\\Repository\\CommitService\\filesForTestGetCommit";
         List<String> editFileActionInsert = Files.readAllLines(Path.of(basePath+"\\editFileActionInsert"));
         List<String> editFileActionEdit = Files.readAllLines(Path.of(basePath+"\\editFileActionEdit"));
         List<String> editFileActionDelete = Files.readAllLines(Path.of(basePath+"\\editFileActionDelete"));
 
-        Commit commitActionInsert = getDeltas(basePath+"\\originalTestFile", editFileActionInsert);
+        Commit commitActionInsert = getCommit(basePath+"\\originalTestFile", editFileActionInsert);
         testGetCommitFromFileActionInsert(commitActionInsert);
 
-        Commit commitActionEdit = getDeltas(basePath+"\\originalTestFile", editFileActionEdit);
+        Commit commitActionEdit = getCommit(basePath+"\\originalTestFile", editFileActionEdit);
         testGetCommitFromFileActionEdit(commitActionEdit);
 
-        Commit commitActionDelete = getDeltas(basePath+"\\originalTestFile", editFileActionDelete);
+        Commit commitActionDelete = getCommit(basePath+"\\originalTestFile", editFileActionDelete);
         testGetCommitFromFileActionDelete(commitActionDelete);
     }
 
-    private Commit getDeltas(String pathOrig, List<String> editFile) throws IOException {
-        return commitService.deltaToCommit(pathOrig, String.join("\n",editFile));
+    private Commit getCommit(String pathOrig, List<String> editFile) throws IOException {
+        return commitService.getCommit(pathOrig, String.join("\n",editFile));
     }
 
     private void testGetCommitFromFileActionInsert(Commit commit) {

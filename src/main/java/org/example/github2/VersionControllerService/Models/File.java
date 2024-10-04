@@ -14,4 +14,9 @@ public class File {
     public File(String pathOriginalFile) {
         this.pathOriginalFile = pathOriginalFile;
     }
+
+    public void addCommit(Commit commit) {
+        if (this.commit!=null) commit.setNextCommit(this.commit);
+        this.commit = commit;
+    }
 }

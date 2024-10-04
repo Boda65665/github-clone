@@ -5,16 +5,40 @@ import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.DeltaType;
 import com.github.difflib.patch.Patch;
 import org.example.github2.VersionControllerService.Models.*;
+import org.springframework.stereotype.Service;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public class CommitService {
+    private final ServiceRepositoryTree serviceRepositoryTree;
 
-    public Commit deltaToCommit(List<Delta> deltas) throws IOException {
+    public CommitService(ServiceRepositoryTree serviceRepositoryTree) {
+        this.serviceRepositoryTree = serviceRepositoryTree;
+    }
+
+    public void addNewCommit(String directoryPath, String nameFile, String newContent, int idRepository) throws IOException {
+        String pathToFile =  directoryPath +"/"+nameFile;
+        Commit commit = getCommit(pathToFile, newContent);
+        serviceRepositoryTree.addNewCommit(directoryPath.replace("P:","").replace("\\", "/"), nameFile,commit, idRepository);
+        setNewContentFile(pathToFile, newContent);
+    }
+
+    private void setNewContentFile(String filePath, String newContent) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write(newContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Commit getCommit(List<Delta> deltas) {
         Commit commit = new Commit();
         for (Delta delta : deltas) {
             commit.addChange(getChange(delta));
@@ -27,9 +51,9 @@ public class CommitService {
         return new Change(position, delta.getAction(), delta.getContent());
     }
 
-    public Commit deltaToCommit(String originalPathFile, String newContent) throws IOException {
+    public Commit getCommit(String originalPathFile, String newContent) throws IOException {
         List<Delta> deltas = getDelta(originalPathFile, newContent);
-        return deltaToCommit(deltas);
+        return getCommit(deltas);
     }
 
     private List<Delta> getDelta(String originalPathFile, String newContent) throws IOException {
