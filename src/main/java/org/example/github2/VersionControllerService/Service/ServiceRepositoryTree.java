@@ -36,7 +36,7 @@ public class ServiceRepositoryTree {
 
     private File findFileByPath(String pathToDirectory,String nameFile, RepositoryTree repositoryTree) {
         List<File> files = new ArrayList<>();
-        if (pathToDirectory.equals("/")) {
+        if (pathToDirectory.equals("/") || pathToDirectory.split("/").length==4) {
             files = repositoryTree.getFiles();
         }
         else {
@@ -55,7 +55,7 @@ public class ServiceRepositoryTree {
     private Directory getDirectoryByPath(RepositoryTree repositoryTree, String pathToDirectory) {
         String[] nameDirectories = pathToDirectory.split("/");
         List<Directory> directories = repositoryTree.getDirectories();
-        for (int i = 1;i<nameDirectories.length;i++) {
+        for (int i = 4;i<nameDirectories.length;i++) {
             boolean findDirectory = false;
             for (Directory directory : directories) {
                 if (nameDirectories[i].equals(directory.getName())){

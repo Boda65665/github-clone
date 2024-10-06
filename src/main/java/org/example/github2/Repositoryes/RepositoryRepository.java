@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RepositoryRepository extends JpaRepository<Repository, Integer> {
     Repository findByNameAndOwner(String name , User owner);
+    Repository findById(int id);
 }

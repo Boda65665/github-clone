@@ -1,5 +1,7 @@
 package org.example.github2.Repository;
 
+import org.example.github2.Entity.Repository;
+import org.example.github2.Repositoryes.RepositoryRepository;
 import org.example.github2.VersionControllerService.Entity.RepositoryTree;
 import org.example.github2.VersionControllerService.Models.*;
 import org.example.github2.VersionControllerService.Repositories.GitRepRepository;
@@ -13,7 +15,6 @@ import java.util.List;
 public class TestAssistant {
     private final GitRepRepository gitRepRepository;
     private final ServiceRepositoryTree serviceRepositoryTree;
-
     public TestAssistant(GitRepRepository gitRepRepository, ServiceRepositoryTree serviceRepositoryTree) {
         this.gitRepRepository = gitRepRepository;
         this.serviceRepositoryTree = serviceRepositoryTree;

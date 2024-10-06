@@ -1,6 +1,7 @@
 package org.example.github2.Repository.CommitService;
 
 import org.example.github2.Repository.TestAssistant;
+import org.example.github2.Repositoryes.RepositoryRepository;
 import org.example.github2.VersionControllerService.Entity.RepositoryTree;
 import org.example.github2.VersionControllerService.Models.*;
 import org.example.github2.VersionControllerService.Repositories.GitRepRepository;
@@ -33,6 +34,8 @@ public class CommitServiceTest {
     private TestAssistant testAssistant;
     @Autowired
     private ServiceRepositoryTree serviceRepositoryTree;
+    @Autowired
+    private RepositoryRepository repositoryRepository;
 
     @TestConfiguration
     static class TestConfig {
@@ -44,7 +47,7 @@ public class CommitServiceTest {
 
     @Test
     void addNewCommit() throws IOException {
-        String basePath = "P:\\github2\\src\\test\\java\\org\\example\\github2\\Repository\\CommitService\\filesForTestAddCommit";
+        String basePath = "P:\\dataForTest\\nameRep\\NameUser\\filesForTestAddCommit";
         String pathToTestFile = basePath + "\\testFile";
         String pathToNewContent = basePath + "\\newContent";
         String pathToInitialMeaning = basePath + "\\origContent";
@@ -52,14 +55,13 @@ public class CommitServiceTest {
         testAssistant.newRepositories(1);
 
         File file = new File("/testFile");
-        String pathFileInTree = basePath.replace("P:","").replace("\\","/");
+        String pathFileInTree = basePath.replace("P:\\dataForTest\\nameRep\\NameUser\\","/");
         serviceRepositoryTree.addNewFile(file,pathFileInTree,0);
 
         String newContent = String.join("\n", Files.readAllLines(Path.of(pathToNewContent)));
         commitService.addNewCommit(basePath,"testFile", newContent, 0);
-
         testSetNewContentFile(pathToTestFile, pathToNewContent);
-        testAddingCommitToFile(pathFileInTree,"testFile");
+        testAddingCommitToFile(basePath.replace("\\","/"),"testFile");
     }
 
     private void setTestFileInitialMeaning(String pathToTestFile, String pathToInitialMeaning) throws IOException {
@@ -72,7 +74,6 @@ public class CommitServiceTest {
     }
 
     private void testAddingCommitToFile(String pathDirectory, String nameFile) {
-        RepositoryTree repositoryTree = gitRepRepository.findByRepositoryId(0);
         Commit commit = serviceRepositoryTree.getCommitByPathToFile(pathDirectory, nameFile, 0);
         Assertions.assertNotNull(commit);
         List<Change> changes = commit.getChanges();
@@ -106,7 +107,7 @@ public class CommitServiceTest {
 
     @Test
     void editFileToCommit() throws IOException {
-        String basePath = "P:\\github2\\src\\test\\java\\org\\example\\github2\\Repository\\CommitService\\filesForTestGetCommit";
+        String basePath = "P:\\dataForTest\\nameRep\\NameUser\\filesForTestGetCommit";
         List<String> editFileActionInsert = Files.readAllLines(Path.of(basePath+"\\editFileActionInsert"));
         List<String> editFileActionEdit = Files.readAllLines(Path.of(basePath+"\\editFileActionEdit"));
         List<String> editFileActionDelete = Files.readAllLines(Path.of(basePath+"\\editFileActionDelete"));

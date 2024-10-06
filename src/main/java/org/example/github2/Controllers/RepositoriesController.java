@@ -10,6 +10,7 @@ import org.example.github2.Services.DB.RepositoryService;
 import org.example.github2.Services.DB.UserService;
 import org.example.github2.Services.JwtService;
 import org.example.github2.VersionControllerService.Entity.RepositoryTree;
+import org.example.github2.VersionControllerService.Service.CommitService;
 import org.example.github2.VersionControllerService.Service.ServiceRepositoryTree;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,12 +28,14 @@ public class RepositoriesController {
     private final RepositoryService repositoryService;
     private final JwtService jwtService;
     private final ServiceRepositoryTree serviceRepositoryTree;
+    private final CommitService commitService;
 
-    public RepositoriesController(UserService userService, RepositoryService repositoryService, JwtService jwtService, ServiceRepositoryTree serviceRepositoryTree) {
+    public RepositoriesController(UserService userService, RepositoryService repositoryService, JwtService jwtService, ServiceRepositoryTree serviceRepositoryTree, CommitService commitService) {
         this.userService = userService;
         this.repositoryService = repositoryService;
         this.jwtService = jwtService;
         this.serviceRepositoryTree = serviceRepositoryTree;
+        this.commitService = commitService;
     }
 
     @GetMapping({"/{login}", "/{login}/"})
@@ -162,21 +165,23 @@ public class RepositoriesController {
         return "/repository/file_edit";
     }
 
-//    @PostMapping("/{login}/{repository}/edit/**")
-//    public String edit(HttpServletRequest request,@PathVariable String login, @PathVariable("repository") String repositoryName, @RequestParam("content") String fileContent){
-//        String email = jwtService.extractEmail(request);
-//        User userDTO = userService.findUserByEmail(email);
-//        User ownerRepository = userService.findUserByLogin(login);
-//        if (userDTO==null || ownerRepository==null || userDTO.getId()!=ownerRepository.getId()){
-//            return "redirect:/";
-//        }
-//        Repository repository = repositoryService.findByNameAndOwner(repositoryName, ownerRepository);
-//        if (repository==null){
-//            return "redirect:/";
-//        }
-//        String basePath = "P:/" + request.getRequestURI().replace("/edit", "");
-//        System.out.println(basePath);
-//
-//    }
+    @PostMapping("/{login}/{repository}/edit/**")
+    public String edit(HttpServletRequest request,@PathVariable String login, @PathVariable("repository") String repositoryName, @RequestParam("content") String fileContent) throws IOException {
+        String email = jwtService.extractEmail(request);
+        User userDTO = userService.findUserByEmail(email);
+        User ownerRepository = userService.findUserByLogin(login);
+        if (userDTO==null || ownerRepository==null || userDTO.getId()!=ownerRepository.getId()){
+            return "redirect:/";
+        }
+        Repository repository = repositoryService.findByNameAndOwner(repositoryName, ownerRepository);
+        if (repository==null){
+            return "redirect:/";
+        }
+        String pathToFile = request.getRequestURI().replace("/edit", "");
+        String nameFile = pathToFile.split("/")[pathToFile.split("/").length-1];
+        String pathToDirectory = pathToFile.replace("/"+nameFile, "");
+        commitService.addNewCommit(pathToDirectory, nameFile, fileContent.replace("\r", ""), repository.getId());
+        return "redirect:"+pathToFile;
+    }
 
 }

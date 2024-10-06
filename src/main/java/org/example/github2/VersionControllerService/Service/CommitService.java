@@ -4,6 +4,8 @@ import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.DeltaType;
 import com.github.difflib.patch.Patch;
+import org.example.github2.Entity.Repository;
+import org.example.github2.Repositoryes.RepositoryRepository;
 import org.example.github2.VersionControllerService.Models.*;
 import org.springframework.stereotype.Service;
 
@@ -13,20 +15,24 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
 public class CommitService {
     private final ServiceRepositoryTree serviceRepositoryTree;
+    private final RepositoryRepository repositoryRepository;
 
-    public CommitService(ServiceRepositoryTree serviceRepositoryTree) {
+    public CommitService(ServiceRepositoryTree serviceRepositoryTree, RepositoryRepository repositoryRepository) {
         this.serviceRepositoryTree = serviceRepositoryTree;
+        this.repositoryRepository = repositoryRepository;
     }
 
     public void addNewCommit(String directoryPath, String nameFile, String newContent, int idRepository) throws IOException {
         String pathToFile =  directoryPath +"/"+nameFile;
         Commit commit = getCommit(pathToFile, newContent);
-        serviceRepositoryTree.addNewCommit(directoryPath.replace("P:","").replace("\\", "/"), nameFile,commit, idRepository);
+        if (commit==null) return;
+        serviceRepositoryTree.addNewCommit(directoryPath.replace("\\","/"), nameFile,commit, idRepository);
         setNewContentFile(pathToFile, newContent);
     }
 
@@ -39,6 +45,7 @@ public class CommitService {
     }
 
     public Commit getCommit(List<Delta> deltas) {
+        if (deltas.isEmpty()) return null;
         Commit commit = new Commit();
         for (Delta delta : deltas) {
             commit.addChange(getChange(delta));
