@@ -1,18 +1,20 @@
 package org.example.github2.VersionControllerService.Service;
 
+import org.example.github2.Entity.Repository;
+import org.example.github2.Entity.User;
+import org.example.github2.Repositoryes.RepositoryRepository;
 import org.example.github2.VersionControllerService.Entity.RepositoryTree;
-import org.example.github2.VersionControllerService.Models.Commit;
-import org.example.github2.VersionControllerService.Models.Directory;
-import org.example.github2.VersionControllerService.Models.File;
+import org.example.github2.VersionControllerService.Models.*;
 import org.example.github2.VersionControllerService.Repositories.GitRepRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Update;
-
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 
@@ -20,73 +22,29 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 public class ServiceRepositoryTree {
     private final GitRepRepository gitRepRepository;
     private final MongoTemplate mongoTemplate;
+    private final RepositoryRepository repositoryRepository;
 
-    public ServiceRepositoryTree(GitRepRepository gitRepRepository, MongoTemplate mongoTemplate) {
+    public ServiceRepositoryTree(GitRepRepository gitRepRepository, MongoTemplate mongoTemplate, RepositoryRepository repositoryRepository) {
         this.gitRepRepository = gitRepRepository;
         this.mongoTemplate = mongoTemplate;
+        this.repositoryRepository = repositoryRepository;
     }
 
-    public void addNewCommit(String pathToDirectory,String nameFile, Commit commit, int idRepository){
+    public void addNewCommit(Commit commit, int idRepository){
         RepositoryTree repositoryTree = findById(idRepository);
-        File file = findFileByPath(pathToDirectory, nameFile, repositoryTree);
-        if (file == null) return;
-        file.addCommit(commit);
+        repositoryTree.addCommit(commit);
         update(repositoryTree);
     }
 
-    private File findFileByPath(String pathToDirectory,String nameFile, RepositoryTree repositoryTree) {
-        List<File> files = new ArrayList<>();
-        if (pathToDirectory.equals("/") || pathToDirectory.split("/").length==4) {
-            files = repositoryTree.getFiles();
-        }
-        else {
-            Directory directory = getDirectoryByPath(repositoryTree,pathToDirectory);
-            if (directory==null) return null;
-            files = directory.getFiles();
-        }
-        for (File file : files) {
-            if (file.getPathOriginalFile().equals("/"+nameFile)){
-                return file;
-            }
-        }
-        return null;
-    }
-
-    private Directory getDirectoryByPath(RepositoryTree repositoryTree, String pathToDirectory) {
-        String[] nameDirectories = pathToDirectory.split("/");
-        List<Directory> directories = repositoryTree.getDirectories();
-        for (int i = 4;i<nameDirectories.length;i++) {
-            boolean findDirectory = false;
-            for (Directory directory : directories) {
-                if (nameDirectories[i].equals(directory.getName())){
-                    directories=directory.getDirectories();
-                    findDirectory = true;
-                    if(i==nameDirectories.length-1) return directory;
-                    break;
-                }
-            }
-            if (!findDirectory) return null;
-        }
-        return null;
-    }
-
-    private File findFile(List<File> files, String path) {
-        for (File file : files) {
-            if (file.getPathOriginalFile().equals(path)) {
-                return file;
-            }
-        }
-        return null;
-    }
-
-    public void save(RepositoryTree newRepositoryTree){
-        gitRepRepository.save(newRepositoryTree);
+    public RepositoryTree findById(int id) {
+        return gitRepRepository.findByRepositoryId(id);
     }
 
     public void update(RepositoryTree updateRepositoryTree){
         Update update = new Update();
         update.set("files", updateRepositoryTree.getFiles());
         update.set("directories", updateRepositoryTree.getDirectories());
+        update.set("commit", updateRepositoryTree.getCommit());
         mongoTemplate.findAndModify(
                 query(where("repositoryId").is(updateRepositoryTree.getRepositoryId())),
                 update,
@@ -94,7 +52,24 @@ public class ServiceRepositoryTree {
         );
     }
 
+    public void save(RepositoryTree newRepositoryTree){
+        gitRepRepository.save(newRepositoryTree);
+    }
+
+    public void addNewFile(String basePath, MultipartFile[] files,int repositoryId) throws IOException {
+        Repository repository = repositoryRepository.findById(repositoryId);
+        User owner = repository.getOwner();
+        String pathDirectoryInTree = basePath.replace("/repository/"+owner.getLogin()+"/"+repository.getName(),"");
+        for (MultipartFile file : files) {
+            addNewFile(new org.example.github2.VersionControllerService.Models.File("/"+file.getOriginalFilename()),
+                    pathDirectoryInTree,repository.getId());
+            Path path = Path.of("P:"+basePath+"/"+file.getOriginalFilename());
+            Files.write(path, file.getBytes());
+        }
+    }
+    
     public void addNewFile(File file,String path,int idRepositoryTree){
+        addNewCommit(path,idRepositoryTree, Action.ADD_FILE);
         RepositoryTree repositoryTree = gitRepRepository.findByRepositoryId(idRepositoryTree);
         String[] namesDirectory = path.split("/");
         if (path.equals("/") || path.isEmpty()){
@@ -131,17 +106,22 @@ public class ServiceRepositoryTree {
                 break;
             }
         }
-
         update(repositoryTree);
     }
 
-    public RepositoryTree findById(int id) {
-        return gitRepRepository.findByRepositoryId(id);
+    private void addNewCommit(String path, int idRepositoryTree, Action action) {
+        RepositoryTree repositoryTree = gitRepRepository.findByRepositoryId(idRepositoryTree);
+        Change change = new Change(null, action, (path.isEmpty())?"/":path);
+        Commit commit = new Commit();
+        commit.addChange(change);
+        repositoryTree.addCommit(commit);
+        update(repositoryTree);
     }
 
-    public Commit getCommitByPathToFile(String pathDirectory, String nameFile, int idRepository) {
-        File file = findFileByPath(pathDirectory, nameFile, gitRepRepository.findByRepositoryId(idRepository));
-        if (file==null) return null;
-        return file.getCommit();
+    public void deleteFile(String path, int idRepositoryTree){
+        addNewCommit(path, idRepositoryTree, Action.DELETE_FILE);
     }
 }
+
+
+

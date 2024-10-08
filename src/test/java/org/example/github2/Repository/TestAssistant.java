@@ -15,6 +15,7 @@ import java.util.List;
 public class TestAssistant {
     private final GitRepRepository gitRepRepository;
     private final ServiceRepositoryTree serviceRepositoryTree;
+
     public TestAssistant(GitRepRepository gitRepRepository, ServiceRepositoryTree serviceRepositoryTree) {
         this.gitRepRepository = gitRepRepository;
         this.serviceRepositoryTree = serviceRepositoryTree;
@@ -23,9 +24,8 @@ public class TestAssistant {
 
     public void newRepositories(int count) {
         for (int i = 0; i < count; i++) {
-            Commit commit = new Commit(null, new ArrayList<>());
-            File file = new File("/first", commit);
-            File file2 = new File("/second", commit);
+            File file = new File("/first");
+            File file2 = new File("/second");
             List<File> files = new ArrayList<>();
             files.add(file);
             files.add(file2);

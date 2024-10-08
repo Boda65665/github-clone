@@ -17,8 +17,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @Slf4j
 @Controller
@@ -138,16 +136,7 @@ public class RepositoriesController {
         if (repository==null){
             return "redirect:/";
         }
-        String pathBaseString = "P:"+request.getRequestURI();
-        String basePath = "/repository/"+ownerRepository.getLogin()+"/"+repositoryName;
-        String pathDirectory = request.getRequestURI().replace(basePath,"").replace("/upload", "");
-        pathBaseString = pathBaseString.replace("/upload", "");
-        for (MultipartFile file : files) {
-            String pathString=pathBaseString+"/"+file.getOriginalFilename();
-            serviceRepositoryTree.addNewFile(new org.example.github2.VersionControllerService.Models.File(pathString),pathDirectory,repository.getId());
-            Path path = Path.of(pathString);
-            Files.write(path, file.getBytes());
-        }
+        serviceRepositoryTree.addNewFile(request.getRequestURI().replace("/upload", ""), files, repository.getId());
         return "redirect:"+request.getRequestURI();
     }
 

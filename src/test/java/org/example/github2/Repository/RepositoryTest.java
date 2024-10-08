@@ -69,11 +69,11 @@ public class RepositoryTest {
     @DirtiesContext
     public void addNewFile(){
         testAssistant.newRepositories(1);
-        serviceRepositoryTree.addNewFile(new File("/",null),"/",0);
-        serviceRepositoryTree.addNewFile(new File("/f",null),"/1",0);
-        serviceRepositoryTree.addNewFile(new File("/d/d",null),"/1/3",0);
-        serviceRepositoryTree.addNewFile(new File("/e/r",null),"/2/3/4",0);
-        serviceRepositoryTree.addNewFile(new File("/e/e",null),"/5/4/1",0);
+        serviceRepositoryTree.addNewFile(new File("/"),"/",0);
+        serviceRepositoryTree.addNewFile(new File("/f"),"/1",0);
+        serviceRepositoryTree.addNewFile(new File("/d/d"),"/1/3",0);
+        serviceRepositoryTree.addNewFile(new File("/e/r"),"/2/3/4",0);
+        serviceRepositoryTree.addNewFile(new File("/e/e"),"/5/4/1",0);
         RepositoryTree repositoryTree = gitRepRepository.findByRepositoryId(0);
         // path = "/"
         Assertions.assertEquals(3, repositoryTree.getFiles().size());

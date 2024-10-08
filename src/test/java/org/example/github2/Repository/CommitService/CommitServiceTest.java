@@ -1,5 +1,6 @@
 package org.example.github2.Repository.CommitService;
 
+import org.checkerframework.checker.units.qual.C;
 import org.example.github2.Repository.TestAssistant;
 import org.example.github2.Repositoryes.RepositoryRepository;
 import org.example.github2.VersionControllerService.Entity.RepositoryTree;
@@ -29,13 +30,10 @@ public class CommitServiceTest {
     @Autowired
     private CommitService commitService;
     @Autowired
-    private GitRepRepository gitRepRepository;
-    @Autowired
     private TestAssistant testAssistant;
     @Autowired
     private ServiceRepositoryTree serviceRepositoryTree;
-    @Autowired
-    private RepositoryRepository repositoryRepository;
+
 
     @TestConfiguration
     static class TestConfig {
@@ -61,7 +59,7 @@ public class CommitServiceTest {
         String newContent = String.join("\n", Files.readAllLines(Path.of(pathToNewContent)));
         commitService.addNewCommit(basePath,"testFile", newContent, 0);
         testSetNewContentFile(pathToTestFile, pathToNewContent);
-        testAddingCommitToFile(basePath.replace("\\","/"),"testFile");
+        testAddingCommitToFile();
     }
 
     private void setTestFileInitialMeaning(String pathToTestFile, String pathToInitialMeaning) throws IOException {
@@ -73,16 +71,17 @@ public class CommitServiceTest {
         }
     }
 
-    private void testAddingCommitToFile(String pathDirectory, String nameFile) {
-        Commit commit = serviceRepositoryTree.getCommitByPathToFile(pathDirectory, nameFile, 0);
-        Assertions.assertNotNull(commit);
+    private void testAddingCommitToFile() {
+        RepositoryTree repositoryTree = serviceRepositoryTree.findById(0);
+        Commit commit = repositoryTree.getCommit();
         List<Change> changes = commit.getChanges();
-        Assertions.assertFalse(changes.isEmpty());
         Change firstChange = changes.getFirst();
-        Assertions.assertEquals(Action.EDIT, firstChange.getAction());
+        Assertions.assertEquals(Action.EDIT_CONTENT_IN_FILE, firstChange.getAction());
         Change lastChange = changes.getLast();
-        Assertions.assertEquals(Action.DELETE, lastChange.getAction());
+        Assertions.assertEquals(Action.DELETE_CONTENT_IN_FILE, lastChange.getAction());
+
     }
+
 
     private void testSetNewContentFile(String pathToTestFile, String pathToNewContent) throws IOException {
         List<String> testFile = Files.readAllLines(Path.of(pathToTestFile));
@@ -100,8 +99,8 @@ public class CommitServiceTest {
 
     private List<Delta> generateTestDelta() {
         List<Delta> newDeltas = new ArrayList<>();
-        newDeltas.add(new Delta(1,2,"fwew","/a", Action.EDIT));
-        newDeltas.add(new Delta(4,4,"dqq","/a",Action.ADD));
+        newDeltas.add(new Delta(1,2,"fwew","/a", Action.EDIT_CONTENT_IN_FILE));
+        newDeltas.add(new Delta(4,4,"dqq","/a",Action.ADD_CONTENT_IN_FILE));
         return newDeltas;
     }
 
@@ -132,7 +131,7 @@ public class CommitServiceTest {
         Assertions.assertEquals("fweeeeeeeeeeewewefewferfef", change.getContent());
         Assertions.assertEquals(5,change.getPosition().getLineStart());
         Assertions.assertEquals(6,change.getPosition().getLineEnd());
-        Assertions.assertEquals(Action.ADD, change.getAction());
+        Assertions.assertEquals(Action.ADD_CONTENT_IN_FILE, change.getAction());
     }
 
     private void testGetCommitFromFileActionEdit(Commit commit) {
@@ -141,13 +140,13 @@ public class CommitServiceTest {
         Assertions.assertEquals("test 34324s43243", changeOnOneLine.getContent());
         Assertions.assertEquals(0,changeOnOneLine.getPosition().getLineStart());
         Assertions.assertEquals(1,changeOnOneLine.getPosition().getLineEnd());
-        Assertions.assertEquals(Action.EDIT, changeOnOneLine.getAction());
+        Assertions.assertEquals(Action.EDIT_CONTENT_IN_FILE, changeOnOneLine.getAction());
 
         Change changeOnTwoLines = changes.get(1);
         Assertions.assertEquals("test123421434wwee\nd", changeOnTwoLines.getContent());
         Assertions.assertEquals(3,changeOnTwoLines.getPosition().getLineStart());
         Assertions.assertEquals(5,changeOnTwoLines.getPosition().getLineEnd());
-        Assertions.assertEquals(Action.EDIT, changeOnTwoLines.getAction());
+        Assertions.assertEquals(Action.EDIT_CONTENT_IN_FILE, changeOnTwoLines.getAction());
     }
 
     private void testGetCommitFromFileActionDelete(Commit commit) {
@@ -156,6 +155,6 @@ public class CommitServiceTest {
         Assertions.assertEquals("test3211111111111111111111111", change.getContent());
         Assertions.assertEquals(4,change.getPosition().getLineStart());
         Assertions.assertEquals(4,change.getPosition().getLineEnd());
-        Assertions.assertEquals(Action.DELETE, change.getAction());
+        Assertions.assertEquals(Action.DELETE_CONTENT_IN_FILE, change.getAction());
     }
 }

@@ -4,7 +4,6 @@ import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.DeltaType;
 import com.github.difflib.patch.Patch;
-import org.example.github2.Entity.Repository;
 import org.example.github2.Repositoryes.RepositoryRepository;
 import org.example.github2.VersionControllerService.Models.*;
 import org.springframework.stereotype.Service;
@@ -15,24 +14,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
 public class CommitService {
     private final ServiceRepositoryTree serviceRepositoryTree;
-    private final RepositoryRepository repositoryRepository;
 
-    public CommitService(ServiceRepositoryTree serviceRepositoryTree, RepositoryRepository repositoryRepository) {
+    public CommitService(ServiceRepositoryTree serviceRepositoryTree) {
         this.serviceRepositoryTree = serviceRepositoryTree;
-        this.repositoryRepository = repositoryRepository;
     }
 
     public void addNewCommit(String directoryPath, String nameFile, String newContent, int idRepository) throws IOException {
         String pathToFile =  directoryPath +"/"+nameFile;
         Commit commit = getCommit(pathToFile, newContent);
         if (commit==null) return;
-        serviceRepositoryTree.addNewCommit(directoryPath.replace("\\","/"), nameFile,commit, idRepository);
+        serviceRepositoryTree.addNewCommit(commit, idRepository);
         setNewContentFile(pathToFile, newContent);
     }
 
@@ -71,10 +67,10 @@ public class CommitService {
         for (AbstractDelta<String> delta : patch.getDeltas()) {
             int positionStart = delta.getTarget().getPosition();
             int positionEnd = positionStart + delta.getTarget().size();
-            Action action = (delta.getType() == DeltaType.DELETE)?Action.DELETE:
-                    (delta.getType()==DeltaType.CHANGE)?Action.EDIT:Action.ADD;
+            Action action = (delta.getType() == DeltaType.DELETE)?Action.DELETE_CONTENT_IN_FILE:
+                    (delta.getType()==DeltaType.CHANGE)?Action.EDIT_CONTENT_IN_FILE:Action.ADD_CONTENT_IN_FILE;
             String editLines = "";
-            if (action!=Action.DELETE){
+            if (action!=Action.DELETE_CONTENT_IN_FILE){
                 editLines = String.join("\n", updateContent.subList(positionStart,positionEnd));
             }
             else {
