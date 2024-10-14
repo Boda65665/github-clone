@@ -12,6 +12,7 @@ import org.example.github2.Services.JwtService;
 import org.example.github2.VersionControllerService.Entity.RepositoryTree;
 import org.example.github2.VersionControllerService.Service.CommitService;
 import org.example.github2.VersionControllerService.Service.ServiceRepositoryTree;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,8 @@ public class RepositoriesController {
     private final JwtService jwtService;
     private final ServiceRepositoryTree serviceRepositoryTree;
     private final CommitService commitService;
+    @Value("${name.disk.with.repository}")
+    private String NAME_DISK_WITH_REPOSITORY;
 
     public RepositoriesController(UserService userService, RepositoryService repositoryService, JwtService jwtService, ServiceRepositoryTree serviceRepositoryTree, CommitService commitService) {
         this.userService = userService;
@@ -37,31 +40,33 @@ public class RepositoriesController {
     }
 
     @GetMapping({"/{login}", "/{login}/"})
-    public String getRepositoriesList(@PathVariable("login") String login, Model model){
+    public String getRepositoriesList(@PathVariable("login") String login, Model model) {
         UserDTO user = userService.findUserDtoByLogin(login);
-        if (user==null) return "redirect:/";
+        if (user == null) return "redirect:/";
         model.addAttribute("user", user);
         return "/repository/list";
     }
 
     @GetMapping("/{login}/{repository}/**")
-    public String getRepository(@PathVariable("login") String login, @PathVariable("repository") String repositoryName, Model model,HttpServletRequest request) {
+    public String getRepository(@PathVariable("login") String login, @PathVariable("repository") String repositoryName, Model model, HttpServletRequest request) {
         Repository repository = repositoryService.findByNameAndOwner(repositoryName, userService.findUserByLogin(login));
         if (repository == null) return "redirect:/";
-        String path = "P:/"+request.getRequestURI();
+        String path = NAME_DISK_WITH_REPOSITORY + "/" + request.getRequestURI();
         File directoryOrFile = new File(path);
+        String href = request.getRequestURI();
         if (directoryOrFile.isDirectory()) {
             String[] filesAndDirs = directoryOrFile.list();
             model.addAttribute("filesAndDirs", filesAndDirs);
         } else {
             String content = getContentFromFile(path);
-            if (content==null) return "redirect:/";
+            if (content == null) return "redirect:/";
             model.addAttribute("content", content);
+            model.addAttribute("editHref", getHref(href, login, repositoryName, "edit"));
+            model.addAttribute("deleteHref", getHref(href, login, repositoryName, "delete"));
             return "/repository/file";
         }
-        String href = request.getRequestURI();
         model.addAttribute("lastHref", href);
-        model.addAttribute("uploadHref", getUploadHref(href, login, repositoryName));
+        model.addAttribute("uploadHref", getHref(href, login, repositoryName, "upload"));
         model.addAttribute("repository", repository);
         return "/repository/dir";
     }
@@ -79,98 +84,93 @@ public class RepositoriesController {
         }
     }
 
-
-    private Object getUploadHref(String href,String login,String repositoryName) {
+    private Object getHref(String href, String login, String repositoryName,String action) {
         StringBuilder sb = new StringBuilder(href);
-        String stringFinding = "/repository"+"/"+login+"/"+repositoryName;
+        String stringFinding = "/repository" + "/" + login + "/" + repositoryName;
         int indexStringFinding = href.indexOf(stringFinding);
-        int indexInsert = indexStringFinding+stringFinding.length();
-        return sb.insert(indexInsert, "/upload").toString();
+        int indexInsert = indexStringFinding + stringFinding.length();
+        return sb.insert(indexInsert, "/"+action).toString();
     }
 
     @GetMapping("/new")
-    public String createRepository(Model model){
+    public String createRepository(Model model) {
         model.addAttribute("repositoryForm", new CreateRepositoryForm());
         return "/repository/new";
     }
 
     @PostMapping("/new")
-    public String createRepository(HttpServletRequest httpServletRequest, @ModelAttribute("createRepositoryForm") CreateRepositoryForm createRepositoryForm){
+    public String createRepository(HttpServletRequest httpServletRequest, @ModelAttribute("createRepositoryForm") CreateRepositoryForm createRepositoryForm) {
         String email = jwtService.extractEmail(httpServletRequest);
         UserDTO userDTO = userService.findUserDtoByEmail(email);
         Repository repository = new Repository(createRepositoryForm.getName(), createRepositoryForm.getIsPrivate(), userService.findUserById(userDTO.getId()));
         int id = repositoryService.addRepository(repository);
         RepositoryTree repositoryTree = new RepositoryTree(id);
         serviceRepositoryTree.save(repositoryTree);
-        String path = "P:/repository/"+userDTO.getLogin()+"/"+repository.getName();
+        String path = NAME_DISK_WITH_REPOSITORY+"/repository/" + userDTO.getLogin() + "/" + repository.getName();
         File directories = new File(path);
         directories.mkdirs();
-        return "redirect:/repositories/"+userDTO.getLogin()+"/"+repository.getName();
+        return "redirect:/repositories/" + userDTO.getLogin() + "/" + repository.getName();
     }
 
     @GetMapping("/{login}/{repository}/upload/**")
-    public String download(@PathVariable String login, @PathVariable("repository") String repositoryName, HttpServletRequest request){
+    public String download(@PathVariable String login, @PathVariable("repository") String repositoryName, HttpServletRequest request) {
+        if(isBadRequest(request,login,repositoryName)) return "redirect:/";
+        return "/repository/download";
+    }
+
+    private boolean isBadRequest(HttpServletRequest request, String login, String repositoryName) {
         String email = jwtService.extractEmail(request);
         User userDTO = userService.findUserByEmail(email);
         User ownerRepository = userService.findUserByLogin(login);
-        if (userDTO==null || ownerRepository==null || userDTO.getId()!=ownerRepository.getId()){
-            return "redirect:/";
+        if (userDTO == null || ownerRepository == null || userDTO.getId() != ownerRepository.getId()) {
+            return true;
         }
         Repository repository = repositoryService.findByNameAndOwner(repositoryName, ownerRepository);
-        if (repository==null){
-            return "redirect:/";
-        }
-        return "/repository/download";
+        return repository == null;
     }
 
     @PostMapping("/{login}/{repository}/upload/**")
     public String download(HttpServletRequest request, @PathVariable String login, @PathVariable("repository") String repositoryName, @RequestParam("files") MultipartFile[] files) throws IOException {
-        String email = jwtService.extractEmail(request);
-        User userDTO = userService.findUserByEmail(email);
+        if(isBadRequest(request,login,repositoryName)) return "redirect:/";
         User ownerRepository = userService.findUserByLogin(login);
-
-        if (userDTO==null || ownerRepository==null || userDTO.getId()!=ownerRepository.getId()){
-            return "redirect:/";
-        }
         Repository repository = repositoryService.findByNameAndOwner(repositoryName, ownerRepository);
-        if (repository==null){
-            return "redirect:/";
-        }
         serviceRepositoryTree.addNewFile(request.getRequestURI().replace("/upload", ""), files, repository.getId());
-        return "redirect:"+request.getRequestURI();
+        return "redirect:" + request.getRequestURI();
     }
 
     @GetMapping("/{login}/{repository}/edit/**")
-    public String edit(HttpServletRequest request, @PathVariable String login, @PathVariable("repository") String repositoryName, Model model){
+    public String edit(HttpServletRequest request, @PathVariable String login, @PathVariable("repository") String repositoryName, Model model) {
         Repository repository = repositoryService.findByNameAndOwner(repositoryName, userService.findUserByLogin(login));
         if (repository == null) return "redirect:/";
-        String path = "P:/"+request.getRequestURI();
-        path = path.replace("/edit","");
+        String path = NAME_DISK_WITH_REPOSITORY+"/" + request.getRequestURI();
+        path = path.replace("/edit", "");
         File file = new File(path);
-        if (file.isDirectory())return "redirect:/";
+        if (file.isDirectory()) return "redirect:/";
         String content = getContentFromFile(path);
-        if (content==null) return "redirect:/";
+        if (content == null) return "redirect:/";
         model.addAttribute("content", content);
         return "/repository/file_edit";
     }
 
     @PostMapping("/{login}/{repository}/edit/**")
-    public String edit(HttpServletRequest request,@PathVariable String login, @PathVariable("repository") String repositoryName, @RequestParam("content") String fileContent) throws IOException {
-        String email = jwtService.extractEmail(request);
-        User userDTO = userService.findUserByEmail(email);
+    public String edit(HttpServletRequest request, @PathVariable String login, @PathVariable("repository") String repositoryName, @RequestParam("content") String fileContent) throws IOException {
+        if(isBadRequest(request,login,repositoryName)) return "redirect:/";
         User ownerRepository = userService.findUserByLogin(login);
-        if (userDTO==null || ownerRepository==null || userDTO.getId()!=ownerRepository.getId()){
-            return "redirect:/";
-        }
         Repository repository = repositoryService.findByNameAndOwner(repositoryName, ownerRepository);
-        if (repository==null){
-            return "redirect:/";
-        }
         String pathToFile = request.getRequestURI().replace("/edit", "");
-        String nameFile = pathToFile.split("/")[pathToFile.split("/").length-1];
-        String pathToDirectory = pathToFile.replace("/"+nameFile, "");
+        String nameFile = pathToFile.split("/")[pathToFile.split("/").length - 1];
+        String pathToDirectory = pathToFile.replace("/" + nameFile, "");
         commitService.addNewCommit(pathToDirectory, nameFile, fileContent.replace("\r", ""), repository.getId());
-        return "redirect:"+pathToFile;
+        return "redirect:" + pathToFile;
     }
 
+    @PostMapping("/{login}/{repository}/delete/**")
+    public String delete(@PathVariable String login,@PathVariable("repository") String repositoryName, HttpServletRequest request) {
+        String pathToFile = request.getRequestURI().replace("/delete", "");
+        if(isBadRequest(request,login,repositoryName)) return "redirect:/";
+        User ownerRepository = userService.findUserByLogin(login);
+        Repository repository = repositoryService.findByNameAndOwner(repositoryName, ownerRepository);
+        serviceRepositoryTree.deleteFile(pathToFile, repository.getId());
+        return "redirect:"+request.getRequestURI();
+    }
 }

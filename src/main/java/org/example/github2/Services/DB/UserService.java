@@ -14,11 +14,9 @@ import java.time.LocalDateTime;
 public class UserService {
     private final UserConverter userConverter = new UserConverter();
     private final UserRepository userRepository;
-    private final RepositoryRepository repositoryRepository;
 
-    public UserService(UserRepository userRepository, RepositoryRepository repositoryRepository) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.repositoryRepository = repositoryRepository;
     }
 
     public void save(User newUser){

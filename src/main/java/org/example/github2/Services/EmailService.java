@@ -44,7 +44,7 @@ public class EmailService {
 
     public String sendUrlForReSetPassword(String to){
         String key = generateRandomSecretKey();
-        sendMessage(to, "Сслка для востановления" ,"Your url: http://localhost:8080/auth/re-set-password/" + key);
+        sendMessage(to, "Ссылка для востановления" ,"Your url: http://localhost:8080/auth/re-set-password/" + key);
         return key;
     }
 

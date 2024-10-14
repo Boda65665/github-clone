@@ -4,10 +4,8 @@ import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.DeltaType;
 import com.github.difflib.patch.Patch;
-import org.example.github2.Repositoryes.RepositoryRepository;
 import org.example.github2.VersionControllerService.Models.*;
 import org.springframework.stereotype.Service;
-
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -66,8 +64,7 @@ public class CommitService {
         for (AbstractDelta<String> delta : patch.getDeltas()) {
             int positionStart = delta.getTarget().getPosition();
             int positionEnd = positionStart + delta.getTarget().size();
-            Action action = (delta.getType() == DeltaType.DELETE)?Action.DELETE_CONTENT_IN_FILE:
-                    (delta.getType()==DeltaType.CHANGE)?Action.EDIT_CONTENT_IN_FILE:Action.ADD_CONTENT_IN_FILE;
+            Action action = getAction(delta);
             String editLines = "";
             if (action==Action.ADD_CONTENT_IN_FILE){
                 editLines = String.join("\n", updateContent.subList(positionStart,positionEnd));
@@ -78,5 +75,10 @@ public class CommitService {
             deltas.add(new Delta(positionStart ,editLines,originalPathFile,action));
         }
         return deltas;
+    }
+
+    private Action getAction(AbstractDelta<String> delta) {
+        return (delta.getType() == DeltaType.DELETE)?Action.DELETE_CONTENT_IN_FILE:
+                (delta.getType()==DeltaType.CHANGE)?Action.EDIT_CONTENT_IN_FILE:Action.ADD_CONTENT_IN_FILE;
     }
 }

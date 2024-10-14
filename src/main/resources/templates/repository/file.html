@@ -7,4 +7,11 @@
 <body>
 <pre th:text="${content}"></pre>
 </body>
+<form method="get" th:action="${editHref}">
+    <input type="submit" value="edit">
+</form>
+<br>
+<form method="post" th:action="${deleteHref}">
+<input type="submit" value="delete">
+</form>
 </html>

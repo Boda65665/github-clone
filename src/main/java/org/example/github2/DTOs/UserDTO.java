@@ -20,9 +20,4 @@ public class UserDTO {
     private Role role;
     private List<Repository> repositories;
 
-    public UserDTO(String email, String password, Role role) {
-        this.email = email;
-        this.password = password;
-        this.role = role;
-    }
 }
