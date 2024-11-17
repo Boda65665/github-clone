@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>email confirmation</title>
+</head>
+<body>
+<p style="color:red" th:text="${err}">
+<form action="/auth/email_confirmation" method="post">
+    <input type="number" name="code" required>
+    <input type="submit" value="send">
+</form>
+<form action="/auth/logout" method="get">
+    <input type="submit" value="logout">
+</form>
+<form method="post" action="/auth/email_confirmation/resend">
+    <input type="submit" value="resend">
+</form>
+</body>
+</html>

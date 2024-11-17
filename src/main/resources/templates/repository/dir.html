@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>files</title>
+</head>
+<body>
+<ul>
+  <li th:each="fileOrDire : ${filesAndDirs}">
+      <a th:href="${lastHref.endsWith('/') ? lastHref + fileOrDire : lastHref + '/' + fileOrDire}" th:text="${fileOrDire}"></a>
+  </li>
+</ul>
+<form method="get" th:action="${uploadHref}">
+    <input type="submit" value="upload files">
+</form>
+<form method="post" th:action="${deleteHref}">
+    <input type="submit" value="delete">
+</form>
+</body>
+</html>

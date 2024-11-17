@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>repository</title>
+</head>
+<body>
+<ul>
+    <li th:each="name : ${namesRepository}">
+        <a th:href="'/repository/'+${user.getLogin()}+'/'+${name}" th:text="${name}"></a>
+    </li>
+</ul>
+</body>
+</html>
