@@ -19,4 +19,11 @@ public class Change {
         this.action = action;
         this.location = location;
     }
+
+    public Change(Action action, String location, String content, int numberLine) {
+        this.action = action;
+        this.location = location;
+        this.content = content;
+        this.numberLine = numberLine;
+    }
 }

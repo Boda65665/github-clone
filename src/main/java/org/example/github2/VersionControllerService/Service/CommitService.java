@@ -4,6 +4,7 @@ import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.DeltaType;
 import com.github.difflib.patch.Patch;
+import org.example.github2.VersionControllerService.Entity.RepositoryTree;
 import org.example.github2.VersionControllerService.Models.*;
 import org.springframework.stereotype.Service;
 import java.io.BufferedWriter;
@@ -85,6 +86,11 @@ public class CommitService {
             if (action==Action.ADD_CONTENT_IN_FILE){
                 editLines = String.join("\n", updateContent.subList(positionStart,positionEnd));
             }
+            else if(action==Action.EDIT_CONTENT_IN_FILE){
+                editLines = delta.getSource().getLines().size() + "~" +
+                        String.join("\n", updateContent.subList(positionStart,positionEnd)) + "~"
+                +deltas.add(new Delta(positionStart ,editLines,originalPathFile,action));
+            }
             else {
                 editLines =  String.join("\n", delta.getSource().getLines());
             }
@@ -96,5 +102,15 @@ public class CommitService {
     private Action getAction(AbstractDelta<String> delta) {
         return (delta.getType() == DeltaType.DELETE)?Action.DELETE_CONTENT_IN_FILE:
                 (delta.getType()==DeltaType.CHANGE)?Action.EDIT_CONTENT_IN_FILE:Action.ADD_CONTENT_IN_FILE;
+    }
+
+    public Commit getCommitByHashId(int idRep,String hashId){
+        RepositoryTree repositoryTree = serviceRepositoryTree.findById(idRep);
+        Commit commit = repositoryTree.getCommit();;
+        while (commit!= null && !commit.getHashId().equals(hashId)){
+            commit=commit.getNextCommit();
+        }
+        return commit;
+
     }
 }

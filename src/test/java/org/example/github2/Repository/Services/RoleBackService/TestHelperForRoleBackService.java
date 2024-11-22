@@ -1,10 +1,7 @@
 package org.example.github2.Repository.Services.RoleBackService;
 
 import org.example.github2.VersionControllerService.Entity.RepositoryTree;
-import org.example.github2.VersionControllerService.Models.Action;
-import org.example.github2.VersionControllerService.Models.Change;
-import org.example.github2.VersionControllerService.Models.Commit;
-import org.example.github2.VersionControllerService.Models.File;
+import org.example.github2.VersionControllerService.Models.*;
 import org.example.github2.VersionControllerService.Repositories.GitRepRepository;
 import org.example.github2.VersionControllerService.Service.ServiceRepositoryTree;
 import org.springframework.stereotype.Component;
@@ -27,6 +24,14 @@ public class TestHelperForRoleBackService {
         clearBd();
         RepositoryTree repositoryTree = new RepositoryTree(0);
         switch (action){
+            case ADD_DIRECTORY -> {
+                createNewDirectory(false,repositoryTree);
+                addNewCommit(repositoryTree,Action.ADD_DIRECTORY);
+            }
+            case DELETE_DIRECTORY -> {
+                createNewDirectory(true,repositoryTree);
+                addNewCommit(repositoryTree,Action.DELETE_DIRECTORY);
+            }
             case ADD_FILE -> {
                 createNewFile(false,repositoryTree);
                 addNewCommit(repositoryTree, Action.ADD_FILE);
@@ -37,6 +42,12 @@ public class TestHelperForRoleBackService {
             }
         }
         serviceRepositoryTree.save(repositoryTree);
+    }
+
+    private void createNewDirectory(boolean isDelete, RepositoryTree repositoryTree) {
+        Directory directory = new Directory("testName");
+        directory.setDelete(isDelete);
+        repositoryTree.addDirectory(directory);
     }
 
     private void createNewFile(boolean isDelete,RepositoryTree repositoryTree) {

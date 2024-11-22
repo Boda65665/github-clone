@@ -12,19 +12,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
 public class RoleBackCommitService {
     private final ServiceRepositoryTree serviceRepositoryTree;
     private final RepositoryService repositoryService;
+    private final CommitService commitService;
     @Value("${name.disk.with.repository}")
     private String NAME_DISK;
 
-    public RoleBackCommitService(ServiceRepositoryTree serviceRepositoryTree, RepositoryService repositoryService) {
+    public RoleBackCommitService(ServiceRepositoryTree serviceRepositoryTree, RepositoryService repositoryService, CommitService commitService) {
         this.serviceRepositoryTree = serviceRepositoryTree;
         this.repositoryService = repositoryService;
+        this.commitService = commitService;
     }
 
     public void roleBackLastCommit(int idRepository){
@@ -41,17 +42,13 @@ public class RoleBackCommitService {
         commit.setCanceled(true);
         for (Change change : commit.getChanges()) {
             switch (change.getAction()){
+                case ADD_DIRECTORY: editDeleteStatusDirectory(change,repositoryTree,true);break;
                 case DELETE_DIRECTORY:editDeleteStatusDirectory(change,repositoryTree,false);break;
                 case DELETE_CONTENT_IN_FILE:editContentInFile(change,Action.DELETE_CONTENT_IN_FILE,repositoryTree);break;
-                case ADD_CONTENT_IN_FILE:{
-                    editContentInFile(change,Action.ADD_CONTENT_IN_FILE,repositoryTree);
-                    break;
-                }
+                case EDIT_CONTENT_IN_FILE:editContentInFile(change,Action.EDIT_CONTENT_IN_FILE,repositoryTree);break;
+                case ADD_CONTENT_IN_FILE:editContentInFile(change,Action.ADD_CONTENT_IN_FILE,repositoryTree);break;
                 case DELETE_FILE: editDeleteStatusFile(change,repositoryTree,false);break;
-                case ADD_FILE:editDeleteStatusFile(change,repositoryTree,true);break;
-
-//                case DELETE_DIRECTORY:restoreDirectory(change);
-//                case EDIT_CONTENT_IN_FILE:restoreContentInFile(change);
+                case ADD_FILE:editDeleteStatusFile(change,repositoryTree,true);
             }
         }
     }
@@ -59,7 +56,7 @@ public class RoleBackCommitService {
     private void editDeleteStatusDirectory(Change change, RepositoryTree repositoryTree, boolean status) {
         String pathToDirectory = change.getLocation();
         Directory directory = getDirectoryByPath(repositoryTree,pathToDirectory);
-        directory.setDelete(true);
+        directory.setDelete(status);
         serviceRepositoryTree.update(repositoryTree);
     }
 
@@ -73,6 +70,40 @@ public class RoleBackCommitService {
         switch (action){
             case DELETE_CONTENT_IN_FILE -> addContentInFile(change,pathToFile);
             case ADD_CONTENT_IN_FILE -> deleteContentInFile(change,pathToFile);
+            case EDIT_CONTENT_IN_FILE -> {
+                String[] payload = change.getContent().split("~");
+                String oldContent = payload[1];
+                int countNumber = Integer.parseInt(payload[0]);
+                int startIndexLine = change.getNumberLine();
+                removeLines(pathToFile,startIndexLine,startIndexLine+countNumber);
+                insertLines(pathToFile,oldContent,startIndexLine);
+            }
+        }
+    }
+
+    private void removeLines(String filePath, Integer startLine, Integer endLine) {
+        Path path = Paths.get(filePath);
+        try {
+            List<String> lines = Files.readAllLines(path);
+            for (int i = endLine - 1; i >= startLine - 1; i--) { // Индексируем с 0
+                if (i < lines.size()) {
+                    lines.remove(i);
+                }
+            }
+            Files.write(path, lines);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void insertLines(String pathToFile, String oldContent, Integer startIndexLine) {
+        Path path = Paths.get(pathToFile);
+        try {
+            List<String> lines = Files.readAllLines(path);
+            lines.add(startIndexLine, oldContent);
+            Files.write(path, lines);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -90,7 +121,6 @@ public class RoleBackCommitService {
             e.printStackTrace();
         }
     }
-
 
     private void deleteContentInFile(Change change,String pathString) {
         try {
@@ -121,15 +151,10 @@ public class RoleBackCommitService {
         return serviceRepositoryTree.getFileByPath(path,repositoryTree);
     }
 
+
     public void roleBackSpecificCommit(int idRepository,String hashId){
         RepositoryTree repositoryTree = serviceRepositoryTree.findById(idRepository);
-        Commit commit = repositoryTree.getCommit();
-        while (commit!=null){
-            if (commit.getHashId().equals(hashId)) {
-                roleBackCommit(commit,repositoryTree);
-                return;
-            }
-            commit = commit.getNextCommit();
-        }
+        Commit commit = commitService.getCommitByHashId(idRepository,hashId);
+        roleBackCommit(commit,repositoryTree);
     }
 }
