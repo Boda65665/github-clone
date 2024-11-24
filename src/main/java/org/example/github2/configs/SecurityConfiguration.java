@@ -40,6 +40,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/auth/reg","/auth/login","auth/re-set-password/**").anonymous()
                         .requestMatchers("/auth/logout").authenticated()
                         .requestMatchers("/repository/**").hasAuthority(Permission.USER.getPermission())
+                        .requestMatchers("/api/**").hasAnyAuthority(Permission.USER.getPermission())
                         .requestMatchers("/").hasAuthority(Permission.USER.getPermission())
                         .anyRequest().permitAll())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))

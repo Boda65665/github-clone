@@ -104,13 +104,26 @@ public class CommitService {
                 (delta.getType()==DeltaType.CHANGE)?Action.EDIT_CONTENT_IN_FILE:Action.ADD_CONTENT_IN_FILE;
     }
 
+    public List<Commit> getCommitsAfter(String lastHashId,int idRep){
+        if (getCommitByHashId(idRep,lastHashId)==null) return null;
+        RepositoryTree repositoryTree = serviceRepositoryTree.findById(idRep);
+        List<Commit> commits = new ArrayList<>();
+        Commit commit = repositoryTree.getCommit();
+        while (commit!=null && !commit.getHashId().equals(lastHashId)){
+            Commit nextCommit = commit.getNextCommit();
+            commit.setNextCommit(null);
+            commits.add(commit);
+            commit = nextCommit;
+        }
+        return commits;
+    }
+
     public Commit getCommitByHashId(int idRep,String hashId){
         RepositoryTree repositoryTree = serviceRepositoryTree.findById(idRep);
-        Commit commit = repositoryTree.getCommit();;
-        while (commit!= null && !commit.getHashId().equals(hashId)){
+        Commit commit = repositoryTree.getCommit();
+        while (commit!=null && commit.getHashId().equals(hashId)){
             commit=commit.getNextCommit();
         }
         return commit;
-
     }
 }
