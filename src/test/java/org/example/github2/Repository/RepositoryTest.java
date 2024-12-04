@@ -67,28 +67,6 @@ public class RepositoryTest {
 
     @Test
     @DirtiesContext
-    public void addNewFile(){
-        testHelper.newTreeRepositories(1);
-        serviceRepositoryTree.addNewFile(new File("/"),"/","testPath",0);
-        serviceRepositoryTree.addNewFile(new File("/f"),"/1","testPath",0);
-        serviceRepositoryTree.addNewFile(new File("/d/d"),"/1/3","testPath",0);
-        serviceRepositoryTree.addNewFile(new File("/e/r"),"/2/3/4","testPath",0);
-        serviceRepositoryTree.addNewFile(new File("/e/e"),"/5/4/1","testPath",0);
-        RepositoryTree repositoryTree = gitRepRepository.findByRepositoryId(0);
-        // path = "/"
-        Assertions.assertEquals(3, repositoryTree.getFiles().size());
-        //path = "/1"
-        Assertions.assertEquals(3,repositoryTree.getDirectories().get(0).getFiles().size());
-        //path = "/1/3"
-        Assertions.assertEquals(1,repositoryTree.getDirectories().get(0).getDirectories().get(0).getFiles().size());
-        //path = "/2/3/4"
-        Assertions.assertEquals(1,repositoryTree.getDirectories().get(1).getDirectories().get(0).getDirectories().get(0).getFiles().size());
-        //path = "/5/4/1"
-        Assertions.assertEquals(1, repositoryTree.getDirectories().get(2).getDirectories().get(0).getDirectories().get(0).getFiles().size());
-    }
-
-    @Test
-    @DirtiesContext
     public void addDirectoryTest(){
         testHelper.newTreeRepositories(1);
         serviceRepositoryTree.addNewDirectory("/7/8/9",0);

@@ -1,6 +1,5 @@
 package org.example.github2.Repository.Services.RoleBackService;
 
-import org.checkerframework.checker.units.qual.A;
 import org.example.github2.VersionControllerService.Entity.RepositoryTree;
 import org.example.github2.VersionControllerService.Models.*;
 import org.example.github2.VersionControllerService.Models.File;
@@ -21,9 +20,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -64,17 +60,17 @@ public class RoleBackServiceTest {
     private void testRoleBack(Action action) {
         clearBd();
         switch (action){
-            case ADD_DIRECTORY -> testRoleBackDeleteOrAddDirectory(action,true);
-            case DELETE_DIRECTORY -> testRoleBackDeleteOrAddDirectory(action,false);
-            case DELETE_CONTENT_IN_FILE ->testRoleBackDeleteContentInFile();
-            case ADD_CONTENT_IN_FILE ->testRoleBackAddContentInFile();
-            case DELETE_FILE ->testRoleBackDeleteOrAddFile(Action.DELETE_FILE,false);
-            case ADD_FILE ->testRoleBackDeleteOrAddFile(action,true);
-            case EDIT_CONTENT_IN_FILE -> testRoleBackEditContentInFile();
+            case ADD_DIRECTORY -> testRbDelOrAddDir(action,true);
+            case DELETE_DIRECTORY -> testRbDelOrAddDir(action,false);
+            case DELETE_CONTENT_IN_FILE -> testRbDelContentFile();
+            case ADD_CONTENT_IN_FILE -> testRbAddContentFile();
+            case DELETE_FILE -> testRbDelOrAddFile(Action.DELETE_FILE,false);
+            case ADD_FILE -> testRbDelOrAddFile(action,true);
+            case EDIT_CONTENT_IN_FILE -> testRbEditContentFile();
         }
     }
 
-    private void testRoleBackDeleteOrAddDirectory(Action action, boolean isDelete) {
+    private void testRbDelOrAddDir(Action action, boolean isDelete) {
         testHelperForRoleBackService.createRepositoryWithCommitAction(action);
         roleBackCommitService.roleBackLastCommit(0);
         RepositoryTree repositoryTree = serviceRepositoryTree.findById(0);
@@ -84,23 +80,23 @@ public class RoleBackServiceTest {
         Assertions.assertEquals(isDelete,directory.isDelete());
     }
 
-    private void testRoleBackDeleteContentInFile() {
+    private void testRbDelContentFile() {
         String pathToTestFile = PATH_TO_FILES+"/AddContentInFile";
         setTestFileInitialMeaning(pathToTestFile+"/orig",pathToTestFile+"/testFile");
-        Change change = generateTestDataForRoleBackDeleteContent();
+        Change change = generateTDForRbDelContentFile();
         callPrivateFunc("addContentInFile",change,pathToTestFile+"/testFile");
         Assertions.assertTrue(compareFiles(pathToTestFile+"/exceptedResult",pathToTestFile+"/testFile"));
     }
 
-    private Change generateTestDataForRoleBackDeleteContent() {
+    private Change generateTDForRbDelContentFile() {
         String pathTestFile = "D:\\github\\src\\test\\java\\org\\example\\github2\\Repository\\Services\\RoleBackService\\testFiles\\DeleteContentInFile\\testFile";
         return new Change(5,pathTestFile,Action.DELETE_CONTENT_IN_FILE,"ee\neee");
     }
 
-    private void testRoleBackAddContentInFile() {
+    private void testRbAddContentFile() {
         String pathToTestFile = PATH_TO_FILES+"/DeleteContentInFile";
         setTestFileInitialMeaning(pathToTestFile+"/orig",pathToTestFile+"/testFile");
-        Change change = generateTestDataForRoleBackAddContent();
+        Change change = generateTDForRbAddContentFile();
         callPrivateFunc("deleteContentInFile",change,pathToTestFile+"/testFile");
 
         Assertions.assertTrue(compareFiles(pathToTestFile+"/exceptedResult",pathToTestFile+"/testFile"));
@@ -130,7 +126,7 @@ public class RoleBackServiceTest {
         }
     }
 
-    private Change generateTestDataForRoleBackAddContent() {
+    private Change generateTDForRbAddContentFile() {
         String pathTestFile = "D:\\github\\src\\test\\java\\org\\example\\github2\\Repository\\Services\\RoleBackService\\testFiles\\DeleteContentInFile\\testFile";
         return new Change(3,pathTestFile,Action.ADD_CONTENT_IN_FILE,"saaaad\ndddddd");
     }
@@ -149,7 +145,7 @@ public class RoleBackServiceTest {
         }
     }
 
-    private void testRoleBackDeleteOrAddFile(Action action,boolean isDelete){
+    private void testRbDelOrAddFile(Action action, boolean isDelete){
         testHelperForRoleBackService.createRepositoryWithCommitAction(action);
         roleBackCommitService.roleBackLastCommit(0);
         RepositoryTree repositoryTree = serviceRepositoryTree.findById(0);
@@ -159,7 +155,7 @@ public class RoleBackServiceTest {
         Assertions.assertEquals(isDelete,file.isDelete());
     }
 
-    private void testRoleBackEditContentInFile() {
+    private void testRbEditContentFile() {
         String orig = PATH_TO_FILES + "\\EditContentInFile\\orig";
         String testFile = PATH_TO_FILES + "\\EditContentInFile\\testFile";
         String excepted = PATH_TO_FILES + "\\EditContentInFile\\exceptedResult";

@@ -89,7 +89,7 @@ public class CommitService {
             else if(action==Action.EDIT_CONTENT_IN_FILE){
                 editLines = delta.getSource().getLines().size() + "~" +
                         String.join("\n", updateContent.subList(positionStart,positionEnd)) + "~"
-                +deltas.add(new Delta(positionStart ,editLines,originalPathFile,action));
+                +String.join("\n", delta.getSource().getLines());
             }
             else {
                 editLines =  String.join("\n", delta.getSource().getLines());
@@ -121,7 +121,7 @@ public class CommitService {
     public Commit getCommitByHashId(int idRep,String hashId){
         RepositoryTree repositoryTree = serviceRepositoryTree.findById(idRep);
         Commit commit = repositoryTree.getCommit();
-        while (commit!=null && commit.getHashId().equals(hashId)){
+        while (commit!=null && !commit.getHashId().equals(hashId)){
             commit=commit.getNextCommit();
         }
         return commit;

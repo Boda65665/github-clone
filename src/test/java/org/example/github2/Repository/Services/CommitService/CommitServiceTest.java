@@ -51,7 +51,7 @@ public class CommitServiceTest {
 
         String newContent = String.join("\n", Files.readAllLines(Path.of(pathToNewContent)));
         commitService.addNewCommit(basePath,"testFile", newContent, 0);
-        testAddingCommitToFile();
+        testAddingCommit();
     }
 
     private void setTestFileInitialMeaning(String pathToTestFile, String pathToInitialMeaning) throws IOException {
@@ -63,7 +63,7 @@ public class CommitServiceTest {
         }
     }
 
-    private void testAddingCommitToFile() {
+    private void testAddingCommit() {
         RepositoryTree repositoryTree = serviceRepositoryTree.findById(0);
         Commit commit = repositoryTree.getCommit();
         List<Change> changes = commit.getChanges();
@@ -98,45 +98,27 @@ public class CommitServiceTest {
 
         String pathToOriginalFile = basePath+"\\originalTestFile";
         Commit commitActionInsert = getCommit(pathToOriginalFile , editFileActionInsert);
-        testGetCommitFromFileActionInsert(commitActionInsert);
+        testGetCommitFromFile(commitActionInsert,Action.ADD_CONTENT_IN_FILE,"regregrgeggreer\nergregregregrer",8,0);
 
         Commit commitActionEdit = getCommit(pathToOriginalFile, editFileActionEdit);
-        testGetCommitFromFileActionEdit(commitActionEdit);
+
+        testGetCommitFromFile(commitActionEdit,Action.EDIT_CONTENT_IN_FILE,"1~wefewfewfewfef~fewewffffffffffffffffff",1,0);
+        testGetCommitFromFile(commitActionEdit,Action.EDIT_CONTENT_IN_FILE,"2~wfegfewfewfefwefef~wfdewfewfefwefewfewfewf\nefwfewfewfewfewfewfefewffefewfe",7,1);
+
 
         Commit commitActionDelete = getCommit(pathToOriginalFile, editFileActionDelete);
-        testGetCommitFromFileActionDelete(commitActionDelete);
+        testGetCommitFromFile(commitActionDelete,Action.DELETE_CONTENT_IN_FILE,"f",10,0);
     }
 
     private Commit getCommit(String pathOrig, List<String> editFile) throws IOException {
         return commitService.getCommit(pathOrig, String.join("\n",editFile));
     }
 
-    private void testGetCommitFromFileActionInsert(Commit commit) {
+    private void testGetCommitFromFile(Commit commit,Action action,String exceptedContent,int startIndexChangingLine,int indexTestingChange){
         List<Change> changes = commit.getChanges();
-        Change change = changes.getFirst();
-        Assertions.assertEquals("regregrgeggreer\nergregregregrer", change.getContent());
-        Assertions.assertEquals(8,change.getNumberLine());
-        Assertions.assertEquals(Action.ADD_CONTENT_IN_FILE, change.getAction());
-    }
-
-    private void testGetCommitFromFileActionEdit(Commit commit) {
-        List<Change> changes = commit.getChanges();
-        Change changeOne = changes.getFirst();
-        Assertions.assertEquals("fewewffffffffffffffffff", changeOne.getContent());
-        Assertions.assertEquals(1, changeOne.getNumberLine());
-        Assertions.assertEquals(Action.EDIT_CONTENT_IN_FILE, changeOne.getAction());
-
-        Change changeTwo = changes.get(1);
-        Assertions.assertEquals("wfdewfewfefwefewfewfewf\nefwfewfewfewfewfewfefewffefewfe", changeTwo.getContent());
-        Assertions.assertEquals(7, changeTwo.getNumberLine());
-        Assertions.assertEquals(Action.EDIT_CONTENT_IN_FILE, changeTwo.getAction());
-    }
-
-    private void testGetCommitFromFileActionDelete(Commit commit) {
-        List<Change> changes = commit.getChanges();
-        Change change = changes.getFirst();
-        Assertions.assertEquals("f", change.getContent());
-        Assertions.assertEquals(10,change.getNumberLine());
-        Assertions.assertEquals(Action.DELETE_CONTENT_IN_FILE, change.getAction());
+        Change change = changes.get(indexTestingChange);
+        Assertions.assertEquals(exceptedContent, change.getContent());
+        Assertions.assertEquals(startIndexChangingLine,change.getNumberLine());
+        Assertions.assertEquals(action, change.getAction());
     }
 }

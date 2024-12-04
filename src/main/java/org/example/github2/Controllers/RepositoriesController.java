@@ -25,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
 @Slf4j
@@ -183,7 +182,7 @@ public class RepositoriesController {
     }
 
     @PostMapping("/{login}/{repository}/edit/**")
-    public String edit(HttpServletRequest request, @PathVariable String login, @PathVariable("repository") String repositoryName, @RequestParam("content") String fileContent) throws IOException, NoSuchAlgorithmException {
+    public String edit(HttpServletRequest request, @PathVariable String login, @PathVariable("repository") String repositoryName, @RequestParam("content") String fileContent) throws IOException {
         if(isBadRequest(request,login,repositoryName)) return "redirect:/";
         User ownerRepository = userService.findUserByLogin(login);
         Repository repository = repositoryService.findByNameAndOwner(repositoryName, ownerRepository);

@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class EndpointService {
-
     private final JwtService jwtService;
 
     public EndpointService(JwtService jwtService) {

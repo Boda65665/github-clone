@@ -2,9 +2,7 @@ package org.example.github2.Services.DB;
 
 import org.example.github2.Converters.UserConverter;
 import org.example.github2.DTOs.UserDTO;
-import org.example.github2.Entity.Repository;
 import org.example.github2.Entity.User;
-import org.example.github2.Repositoryes.RepositoryRepository;
 import org.example.github2.Repositoryes.UserRepository;
 import org.example.github2.Security.SHA256;
 import org.springframework.stereotype.Service;

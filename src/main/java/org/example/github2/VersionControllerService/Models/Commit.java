@@ -29,10 +29,4 @@ public class Commit {
         this.hashId = hashId;
         this.name = name;
     }
-
-    public Commit(String hashId, String name, boolean isCanceled) {
-        this.hashId = hashId;
-        this.name = name;
-        this.isCanceled = isCanceled;
-    }
 }

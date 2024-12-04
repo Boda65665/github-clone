@@ -68,15 +68,14 @@ public class ServiceRepositoryTree {
         User owner = repository.getOwner();
         String pathDirectoryInTree = basePath.replace("/repository/" + owner.getLogin() + "/" + repository.getName(), "");
         for (MultipartFile file : files) {
-            addNewFile(new File(file.getOriginalFilename()),
-                    pathDirectoryInTree, basePath, repository.getId());
+            addNewFile(new File(file.getOriginalFilename()), pathDirectoryInTree, repository.getId());
             Path path = Path.of(NAME_DISK_WITH_REPOSITORY + basePath + "/" + file.getOriginalFilename());
             Files.write(path, file.getBytes());
         }
     }
 
-    public void addNewFile(File file, String path, String pathFile, int idRepositoryTree) {
-        addNewCommit(pathFile, idRepositoryTree, Action.ADD_FILE);
+    public void addNewFile(File file, String path, int idRepositoryTree) {
+        addNewCommit(path+"/"+file.getName(), idRepositoryTree, Action.ADD_FILE);
         RepositoryTree repositoryTree = gitRepRepository.findByRepositoryId(idRepositoryTree);
         String[] namesDirectory = path.split("/");
         if (path.equals("/") || path.isEmpty()) {
@@ -181,14 +180,9 @@ public class ServiceRepositoryTree {
         for (int i = 0; i < repositoryNames.length; i++) {
             if (i == repositoryNames.length - 1) {
                 if (sourceType == SourceType.DIRECTORY) {
-                    for (Directory directory : directories) {
-                        if (directory.getName().equals(repositoryNames[repositoryNames.length - 1]))
-                            return directory.isDelete();
-                    }
+                    if (isDeleteDirectory(directories,repositoryNames[repositoryNames.length - 1])) return true;
                 } else {
-                    for (File file : files) {
-                        if (file.getName().equals(repositoryNames[repositoryNames.length - 1])) return file.isDelete();
-                    }
+                    if(isDeleteFile(files,repositoryNames[repositoryNames.length - 1])) return true;
                 }
             }
             for (Directory directory : directories) {
@@ -201,6 +195,21 @@ public class ServiceRepositoryTree {
             }
         }
         return getFileByPath(pathString, repositoryTree).isDelete();
+    }
+
+    private boolean isDeleteFile(List<File> files, String repositoryName) {
+        for (File file : files) {
+            if (file.getName().equals(repositoryName)) return file.isDelete();
+        }
+        return false;
+    }
+
+    private boolean isDeleteDirectory(List<Directory> directories, String repositoryName) {
+        for (Directory directory : directories) {
+            if (directory.getName().equals(repositoryName))
+                return directory.isDelete();
+        }
+        return false;
     }
 
     public Directory getDirectoryByPath(int ideRepository, String path) {
@@ -247,7 +256,6 @@ public class ServiceRepositoryTree {
             e.printStackTrace();
         }
     }
-
 }
 
 

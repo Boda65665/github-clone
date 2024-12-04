@@ -41,21 +41,4 @@ public class EmailService {
         int max = 999999;
         return random.nextInt(max - min + 1) + min;
     }
-
-    public String sendUrlForReSetPassword(String to){
-        String key = generateRandomSecretKey();
-        sendMessage(to, "Ссылка для востановления" ,"Your url: http://localhost:8080/auth/re-set-password/" + key);
-        return key;
-    }
-
-    private String generateRandomSecretKey(){
-        String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        Random random = new Random();
-        StringBuilder sb = new StringBuilder(30);
-        for (int i = 0; i < 30; i++) {
-            int index = random.nextInt(CHARACTERS.length());
-            sb.append(CHARACTERS.charAt(index));
-        }
-        return sb.toString();
-    }
 }
